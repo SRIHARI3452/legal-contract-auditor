@@ -14,13 +14,14 @@ import requests
 from openai import OpenAI
 from models import Action, ActionType
 
-ENV_URL = os.getenv("ENV_URL", "https://huggingface.co/spaces/Srihari3452/legal-contract-auditor")
-HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
-API_BASE_URL = os.getenv("API_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")
-MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.0-flash")
+ENV_URL = os.getenv("ENV_URL", "https://srihari3452-legal-contract-auditor.hf.space")
+API_BASE_URL = os.environ.get("API_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")
+MODEL_NAME = os.environ.get("MODEL_NAME", "gemini-2.0-flash")
+API_KEY = os.environ.get("API_KEY") or os.environ.get("HF_TOKEN") or os.environ.get("OPENAI_API_KEY")
+HF_TOKEN = os.environ.get("HF_TOKEN") or os.environ.get("API_KEY")
 
-if HF_TOKEN is None:
-    raise ValueError("HF_TOKEN or OPENAI_API_KEY environment variable is required")
+if API_KEY is None:
+    raise ValueError("API_KEY environment variable is required")
 
 TEMPERATURE = 0.1          
 MAX_TOKENS  = 1024         
@@ -125,7 +126,7 @@ def log_end(success: bool, steps: int, rewards: List[float]) -> None:
 
 def get_client() -> OpenAI:
     return OpenAI(
-        api_key=HF_TOKEN,
+        api_key=API_KEY,
         base_url=API_BASE_URL,
     )
 
@@ -354,7 +355,7 @@ def main() -> None:
     print("=" * 60, file=sys.stderr)
     print(f"  API Base:  {API_BASE_URL}", file=sys.stderr)
     print(f"  Model:     {MODEL_NAME}", file=sys.stderr)
-    print(f"  HF_TOKEN:  SET", file=sys.stderr)
+    print(f"  API_KEY:   {'SET' if API_KEY else 'NOT SET'}", file=sys.stderr)
     print(f"  Tasks:     {TASKS}", file=sys.stderr)
     print("=" * 60, file=sys.stderr)
 
