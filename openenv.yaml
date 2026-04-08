@@ -1,0 +1,87 @@
+name: LegalContractAuditor
+version: "1.0.0"
+description: >
+  Reinforcement Learning Environment for Automated Contract Compliance Review.
+  An AI agent audits real commercial contracts from the CUAD dataset that have been
+  deliberately broken — missing clauses, risky language, contradictions, undefined
+  references — the agent must read the contract, find every problem, propose legally
+  valid fixes, apply them, and pass a final audit. Grading is 100% deterministic.
+author: LegalContractAuditor Team
+tags:
+  - openenv
+  - legal
+  - contract-review
+  - nlp
+  - real-world
+  - cuad
+  - agent-evaluation
+license: MIT
+dataset: CUAD (Contract Understanding Atticus Dataset) - HuggingFace
+dataset_url: https://huggingface.co/datasets/theatticusproject/cuad
+
+tasks:
+  - id: task_easy
+    name: Software License Audit
+    difficulty: easy
+    max_steps: 20
+    description: >
+      Audit a deliberately broken software license agreement.
+      Find missing confidentiality clause, ambiguous payment terms,
+      weak termination clause, and overbroad liability exclusion.
+    scoring: 0.0 to 1.0 (deterministic)
+
+  - id: task_medium
+    name: MSA Contradiction Detection
+    difficulty: medium
+    max_steps: 30
+    description: >
+      Audit a Master Services Agreement riddled with direct contradictions
+      in payment terms, IP ownership, SLA guarantees, and governing law.
+      Also identify a GDPR/CCPA compliance risk in the data privacy clause.
+    scoring: 0.0 to 1.0 (deterministic)
+
+  - id: task_hard
+    name: M&A NDA Full Audit
+    difficulty: hard
+    max_steps: 40
+    description: >
+      Perform a full audit of a complex Merger & Acquisition NDA.
+      Find undefined Effective Date, conflicting confidentiality periods,
+      dangerously low protection standards, missing residuals clause analysis,
+      unenforced advisor NDA obligations, and unresolved schedule conflicts.
+    scoring: 0.0 to 1.0 (deterministic)
+
+observation_space:
+  contract_text: string — full contract text
+  contract_id: string
+  task_id: string
+  task_description: string
+  current_step: integer
+  max_steps: integer
+  identified_issues: list of Issue objects
+  applied_fixes: list of strings
+  available_actions: list of ActionType
+  last_action_result: string
+  last_action_error: string or null
+  progress_pct: float 0.0–1.0
+  hints: list of strings
+
+action_space:
+  action_type: one of [read_contract, identify_issue, propose_fix, apply_fix, request_clause, submit_audit, skip]
+  issue_id: optional string
+  issue_category: one of [missing_clause, risky_language, contradiction, undefined_reference, ambiguous_term, compliance_risk]
+  issue_severity: one of [critical, high, medium, low]
+  issue_description: optional string
+  clause_name: optional string
+  fix_text: optional string
+  fix_rationale: optional string
+  section_reference: optional string
+  audit_summary: optional string
+
+endpoints:
+  reset: POST /reset
+  step: POST /step
+  state: GET /state
+  validate: GET /validate
+  tasks: GET /tasks
+  health: GET /health
