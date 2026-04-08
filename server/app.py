@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 import os
+import sys
+
+# ensure parent module is tracked for environment / models python resolving
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 from typing import Any, Dict, Optional
 
 import uvicorn
@@ -92,6 +97,9 @@ def state() -> Dict[str, Any]:
     return env.state()
 
 
-if __name__ == "__main__":
+def main():
     port = int(os.environ.get("PORT", 7860))
-    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=False)
+    uvicorn.run("server.app:app", host="0.0.0.0", port=port, reload=False)
+
+if __name__ == "__main__":
+    main()

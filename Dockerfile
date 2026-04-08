@@ -18,4 +18,4 @@ ENV PORT=7860
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 
-CMD ["python", "app.py"]
+CMD ["python", "server/app.py"]
