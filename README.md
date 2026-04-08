@@ -73,7 +73,8 @@ The environment currently ships with 3 incrementally difficult tasks:
    ```bash
    export HF_TOKEN="your_valid_api_key_here"
    export MODEL_NAME="gemini-2.0-flash" 
-   export API_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai/"
+   export BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai/"
+   export API_BASE_URL="https://huggingface.co/spaces/<username>/<repo name>/"
    ```
 
 ## Run Instructions

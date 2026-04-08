@@ -10,12 +10,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import requests
 from openai import OpenAI
-from environment import LegalContractAuditorEnv
 from models import Action, ActionType
 
+API_BASE_URL = os.getenv("API_BASE_URL", "https://huggingface.co/spaces/Srihari3452/legal-contract-auditor")
 HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
-API_BASE_URL = os.getenv("API_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")
+BASE_URL = os.getenv("BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")
 MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.0-flash")
 
 if HF_TOKEN is None:
@@ -125,7 +126,7 @@ def log_end(success: bool, steps: int, rewards: List[float]) -> None:
 def get_client() -> OpenAI:
     return OpenAI(
         api_key=HF_TOKEN,
-        base_url=API_BASE_URL,
+        base_url=BASE_URL,
     )
 
 def call_model(client: OpenAI, messages: List[Dict]) -> str:
@@ -256,7 +257,7 @@ def build_step_context(step_num: int, obs_dict: Dict[str, Any]) -> str:
     return "\n".join(parts)
 
 
-def run_episode(client: OpenAI, env: LegalContractAuditorEnv, task_id: str) -> Dict[str, Any]:
+def run_episode(client: OpenAI, task_id: str) -> Dict[str, Any]:
     log_start(task=task_id, env=BENCHMARK, model=MODEL_NAME)
 
     rewards: List[float] = []
@@ -265,8 +266,9 @@ def run_episode(client: OpenAI, env: LegalContractAuditorEnv, task_id: str) -> D
     success = False
 
     try:
-        obs = env.reset(task_id=task_id)
-        obs_dict = obs.model_dump()
+        resp = requests.post(f"{API_BASE_URL}/reset", json={"task_id": task_id})
+        resp.raise_for_status()
+        obs_dict = resp.json()
 
         messages: List[Dict] = [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -298,11 +300,13 @@ def run_episode(client: OpenAI, env: LegalContractAuditorEnv, task_id: str) -> D
 
             try:
                 action = build_action(action_dict)
-                result = env.step(action)
+                resp = requests.post(f"{API_BASE_URL}/step", json={"action": action.model_dump()})
+                resp.raise_for_status()
+                result_dict = resp.json()
 
-                reward_value = result.reward.total
-                done = result.done
-                obs_dict = result.observation.model_dump()
+                reward_value = result_dict["reward"]["total"]
+                done = result_dict["done"]
+                obs_dict = result_dict["observation"]
                 last_error = obs_dict.get("last_action_error")
                 error_str = last_error if last_error else None
 
@@ -311,7 +315,7 @@ def run_episode(client: OpenAI, env: LegalContractAuditorEnv, task_id: str) -> D
                 done = False
                 error_str = str(e)
                 if "obs_dict" not in dir():
-                    obs_dict = obs.model_dump()
+                    obs_dict = {}
 
             rewards.append(reward_value)
             steps_taken = step_num
@@ -355,13 +359,12 @@ def main() -> None:
     print("=" * 60, file=sys.stderr)
 
     client = get_client()
-    env = LegalContractAuditorEnv()
 
     results: List[Dict] = []
 
     for task_id in TASKS:
         try:
-            result = run_episode(client, env, task_id)
+            result = run_episode(client, task_id)
             results.append(result)
         except Exception as e:
             log_end(success=False, steps=0, rewards=[])
