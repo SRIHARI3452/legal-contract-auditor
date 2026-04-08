@@ -49,7 +49,7 @@ def health() -> Dict[str, str]:
         "status": "ok",
         "environment": "LegalContractAuditor",
         "description": "RL Environment for Automated Contract Compliance Review",
-        "version": "1.0.0",
+        "version": "1.0",
     }
 
 
