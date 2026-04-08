@@ -14,9 +14,9 @@ import requests
 from openai import OpenAI
 from models import Action, ActionType
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://huggingface.co/spaces/Srihari3452/legal-contract-auditor")
+ENV_URL = os.getenv("ENV_URL", "https://huggingface.co/spaces/Srihari3452/legal-contract-auditor")
 HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
-BASE_URL = os.getenv("BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")
 MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.0-flash")
 
 if HF_TOKEN is None:
@@ -126,7 +126,7 @@ def log_end(success: bool, steps: int, rewards: List[float]) -> None:
 def get_client() -> OpenAI:
     return OpenAI(
         api_key=HF_TOKEN,
-        base_url=BASE_URL,
+        base_url=API_BASE_URL,
     )
 
 def call_model(client: OpenAI, messages: List[Dict]) -> str:
@@ -266,7 +266,7 @@ def run_episode(client: OpenAI, task_id: str) -> Dict[str, Any]:
     success = False
 
     try:
-        resp = requests.post(f"{API_BASE_URL}/reset", json={"task_id": task_id})
+        resp = requests.post(f"{ENV_URL}/reset", json={"task_id": task_id})
         resp.raise_for_status()
         obs_dict = resp.json()
 
@@ -300,7 +300,7 @@ def run_episode(client: OpenAI, task_id: str) -> Dict[str, Any]:
 
             try:
                 action = build_action(action_dict)
-                resp = requests.post(f"{API_BASE_URL}/step", json={"action": action.model_dump()})
+                resp = requests.post(f"{ENV_URL}/step", json={"action": action.model_dump()})
                 resp.raise_for_status()
                 result_dict = resp.json()
 

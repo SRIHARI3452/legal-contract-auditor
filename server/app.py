@@ -67,9 +67,10 @@ def get_tasks() -> Dict[str, Any]:
 
 
 @app.post("/reset")
-def reset(req: ResetRequest) -> Dict[str, Any]:
+def reset(req: Optional[ResetRequest] = None) -> Dict[str, Any]:
     try:
-        obs = env.reset(task_id=req.task_id)
+        task_id = req.task_id if req else "task_easy"
+        obs = env.reset(task_id=task_id)
         return obs.model_dump()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
