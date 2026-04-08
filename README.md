@@ -1,3 +1,13 @@
+cat > README.md << 'EOF'
+---
+title: LegalContractAuditor
+emoji: ⚖️
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+---
+
 # LegalContractAuditor
 
 ## Environment Description
