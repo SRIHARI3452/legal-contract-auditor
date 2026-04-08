@@ -53,12 +53,11 @@ def health() -> Dict[str, str]:
     }
 
 
-@app.get("/validate")
+@app.get("/")
 def validate() -> Dict[str, Any]:
     return {
-        "openenv_compliant": True,
-        "spec_version": "1.0",
-        "endpoints": ["/reset", "/step", "/state", "/validate", "/tasks", "/health"]
+        "version": "1.0",
+        "endpoints": ["/reset", "/step", "/state",  "/tasks", "/health"]
     }
 
 
