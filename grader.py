@@ -15,10 +15,10 @@ DETECTION_THRESHOLD = 0.30
 
 def _keyword_overlap(text: str, keywords: List[str]) -> float:
     if not keywords:
-        return 0.0
+        return 0.0001  
     text_lower = text.lower()
     hits = sum(1 for kw in keywords if kw.lower() in text_lower)
-    return hits / len(keywords)
+    return max(0.0001, min(0.9999, hits / len(keywords)))
 
 
 def _match_issue_to_ground_truth(
@@ -49,14 +49,12 @@ def _match_issue_to_ground_truth(
 
 
 def _fix_quality_score(issue: Issue, gt_issue: Dict[str, Any]) -> float:
-
     if not issue.fix_applied or not issue.fix_text:
-        return 0.0
-
+        return 0.0001  
     fix_text = (issue.fix_text or "") + " " + (issue.fix_rationale or "")
     overlap = _keyword_overlap(fix_text, gt_issue["keywords"])
-    length_score = min(1.0, len(fix_text) / 80)  
-    return round((overlap * 0.7 + length_score * 0.3), 3)
+    length_score = min(0.9999, len(fix_text) / 80)
+    return round(max(0.0001, min(0.9999, overlap * 0.7 + length_score * 0.3)), 3)
 
 
 def grade_episode(
@@ -130,11 +128,11 @@ def grade_episode(
 
     return Reward(
         total=total,
-        issue_detection=round(issue_detection, 4),
-        fix_quality=round(fix_quality, 4),
-        completeness=round(completeness, 4),
-        accuracy_penalty=round(accuracy_penalty, 4),
-        step_efficiency=round(step_efficiency, 4),
+        issue_detection=round(max(0.0001, min(0.9999, issue_detection)), 4),
+        fix_quality=round(max(0.0001, min(0.9999, fix_quality)), 4),
+        completeness=round(max(0.0001, min(0.9999, completeness)), 4),
+        accuracy_penalty=round(max(0.0001, min(0.9999, accuracy_penalty)), 4),
+        step_efficiency=round(max(0.0001, min(0.9999, step_efficiency)), 4),
     )
 
 
@@ -146,7 +144,7 @@ def partial_reward(
 ) -> float:
     n_gt = len(ground_truth_issues)
     if n_gt == 0:
-        return 0.0
+        return 0.0001
 
     already_matched: set = set()
     matched_count = 0
