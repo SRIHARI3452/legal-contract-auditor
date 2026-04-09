@@ -73,12 +73,12 @@ class Observation(BaseModel):
 
 
 class Reward(BaseModel):
-    total:            float = 0.0
-    issue_detection:  float = 0.0
-    fix_quality:      float = 0.0
-    completeness:     float = 0.0
-    accuracy_penalty: float = 0.0
-    step_efficiency:  float = 0.0
+    total:            float = 0.0001  
+    issue_detection:  float = 0.0001  
+    fix_quality:      float = 0.0001  
+    completeness:     float = 0.0001  
+    accuracy_penalty: float = 0.0001  
+    step_efficiency:  float = 0.0001  
 
 
 class StepResult(BaseModel):

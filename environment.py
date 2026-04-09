@@ -207,7 +207,9 @@ class LegalContractAuditorEnv:
         assert s is not None
 
         progress = len(s.identified_issues) / max(1, len(s.ground_truth_issues))
-        progress = min(1.0, round(progress, 3))
+        progress = round(max(0.0001, min(0.9999, round(progress, 3))), 3)
+
+
 
         available: List[ActionType] = [ActionType.SKIP]
         if not s.contract_read:

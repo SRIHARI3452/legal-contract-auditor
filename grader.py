@@ -94,27 +94,28 @@ def grade_episode(
         SEVERITY_WEIGHTS.get(g["severity"], 0.5) for g in ground_truth_issues
     )
     raw_detection = sum(detection_scores)
-    issue_detection = min(1.0, raw_detection / max_possible_detection) if max_possible_detection else 0.0
+    issue_detection = min(0.9999, raw_detection / max_possible_detection) if max_possible_detection else 0.0001
+
 
     max_possible_fix = sum(
         SEVERITY_WEIGHTS.get(g["severity"], 0.5) for g in ground_truth_issues
     )
     raw_fix = sum(fix_scores)
-    fix_quality = min(1.0, raw_fix / max_possible_fix) if max_possible_fix else 0.0
+    fix_quality = min(0.9999, raw_fix / max_possible_fix) if max_possible_fix else 0.0001
+
 
     critical_gt = [g for g in ground_truth_issues if g["severity"] == "critical"]
     critical_found = sum(
         1 for g in critical_gt if g["issue_id"] in already_matched
     )
-    completeness = 0.0
+    completeness = 0.0001
     if audit_submitted:
         completeness += 0.1 
         if critical_gt:
             completeness += 0.1 * (critical_found / len(critical_gt))
 
     steps_used_ratio = current_step / max_steps if max_steps else 1.0
-    step_efficiency = max(0.0, 0.05 * (1.0 - steps_used_ratio)) * issue_detection
-
+    step_efficiency = max(0.0001, 0.05 * (1.0 - steps_used_ratio)) * issue_detection
     accuracy_penalty = min(0.30, false_positive_penalty)
 
     total = (

@@ -264,7 +264,7 @@ def run_episode(client: OpenAI, task_id: str) -> Dict[str, Any]:
 
     rewards: List[float] = []
     steps_taken = 0
-    score = 0.0
+    score = 0.0001
     success = False
 
     try:
@@ -314,7 +314,7 @@ def run_episode(client: OpenAI, task_id: str) -> Dict[str, Any]:
                 error_str = last_error if last_error else None
 
             except Exception as e:
-                reward_value = 0.0
+                reward_value = 0.0001 
                 done = False
                 error_str = str(e)
                 if "obs_dict" not in dir():
@@ -376,8 +376,8 @@ def main() -> None:
                 "task_id": task_id,
                 "success": False,
                 "steps_taken": 0,
-                "final_reward": 0.0,
-                "rewards": [0.0],
+                "final_reward": 0.0001,
+                "rewards": [0.0001], 
                 "error": str(e),
             })
 
