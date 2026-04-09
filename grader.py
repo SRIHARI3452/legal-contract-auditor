@@ -70,7 +70,7 @@ def grade_episode(
     
     n_gt = len(ground_truth_issues)
     if n_gt == 0:
-        return Reward(total=0.0)
+        return Reward(total=0.0001)
 
     already_matched: set = set()
     detection_scores: List[float] = []
@@ -122,11 +122,11 @@ def grade_episode(
     total = (
         issue_detection    * 0.45
         + fix_quality      * 0.35
-        + completeness     * 1.00   
-        + step_efficiency  * 1.00  
+        + completeness     * 0.15
+        + step_efficiency  * 0.05
         - accuracy_penalty
     )
-    total = round(max(0.0, min(1.0, total)), 4)
+    total = round(max(0.0001, min(0.9999, total)), 4)
 
     return Reward(
         total=total,
@@ -158,4 +158,4 @@ def partial_reward(
             already_matched.add(gt_id)
             matched_count += 1
 
-    return round(matched_count / n_gt, 4)
+    return round(max(0.0001, min(0.9999, matched_count / n_gt)), 4)
