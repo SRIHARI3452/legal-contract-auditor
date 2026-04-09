@@ -1,4 +1,4 @@
-from _future_ import annotations
+from __future__ import annotations
 
 import json
 import os
@@ -153,14 +153,14 @@ def call_model(client: OpenAI, messages: List[Dict]) -> str:
 
 def parse_action(text: str) -> Dict[str, Any]:
     text = text.strip()
-    for start in [text.find("json"), text.find(""), text.find("{")]:
+    for start in [text.find("```json"), text.find("```"), text.find("{")]:
         if start == -1:
             continue
         if text[start] == "`":
             end = text.find("```", start + 3)
             if end == -1:
                 continue
-            blob = text[start + 7 if "json" in text[start:start + 7] else start + 3 : end].strip()
+            blob = text[start + 7 if "```json" in text[start:start+7] else start + 3 : end].strip()
         else:
             blob = text[start:]
             depth = 0
