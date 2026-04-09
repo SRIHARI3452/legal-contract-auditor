@@ -290,6 +290,7 @@ def run_episode(client: OpenAI, task_id: str) -> Dict[str, Any]:
 
         max_steps = obs_dict["max_steps"]
 
+        done = False
         for step_num in range(1, max_steps + 1):
             context = build_step_context(step_num, obs_dict)
             messages.append({"role": "user", "content": context})
@@ -394,6 +395,6 @@ def main() -> None:
     print(f"\n  AVERAGE SCORE: {avg:.4f}", file=sys.stderr)
     print("=" * 60, file=sys.stderr)
 
-
-if _name_ == "_main_":
+    
+if __name__ == "__main__":
     main()
