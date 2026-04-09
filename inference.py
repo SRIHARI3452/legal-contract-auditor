@@ -120,9 +120,10 @@ def log_step(step: int, action: str, reward: float, done: bool, error: Optional[
         flush=True,
     )
 
-def log_end(success: bool, steps: int, rewards: List[float]) -> None:
+def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
+    score = max(0.0001, min(0.9999, score))
     rewards_str = ",".join(f"{r:.4f}" for r in rewards) if rewards else "0.0001"
-    print(f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}", flush=True)
+    print(f"[END] success={str(success).lower()} steps={steps} score={score:.4f} rewards={rewards_str}", flush=True)
 
 def get_client() -> OpenAI:
     return OpenAI(
@@ -339,7 +340,8 @@ def run_episode(client: OpenAI, task_id: str) -> Dict[str, Any]:
         print(f"  [Episode error] {e}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
 
-    log_end(success=success, steps=steps_taken, rewards=rewards)
+    score = max(0.0001, min(0.9999, score))
+    log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
     return {
         "task_id": task_id,
@@ -370,7 +372,7 @@ def main() -> None:
             result = run_episode(client, task_id)
             results.append(result)
         except Exception as e:
-            log_end(success=False, steps=0, rewards=[])
+            log_end(success=False, steps=0, score=0.0001, rewards=[])
             print(f"  [Fatal error on {task_id}] {e}", file=sys.stderr)
             results.append({
                 "task_id": task_id,
