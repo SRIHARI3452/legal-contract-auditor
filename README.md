@@ -5,100 +5,135 @@ colorFrom: blue
 colorTo: green
 sdk: docker
 pinned: false
+tags:
+  - openenv
 ---
 
 # LegalContractAuditor
 
-## Environment Description
-**LegalContractAuditor** is a Reinforcement Learning environment designed for Automated Contract Compliance Review. 
-An AI agent acting as a paralegal or lawyer audits real commercial contracts spanning multiple legal domains. The agent must systematically traverse a contract, identify injected legal bugs (missing clauses, contradictions, undefined references, compliance risks), propose specific fixes, and conclude with a summarized audit report.
+An OpenEnv-compatible RL environment where an agent audits legal contracts for defects — missing clauses, contradictions, risky wording, compliance gaps — and proposes fixes. Built on top of real contract structures from the [CUAD dataset](https://huggingface.co/datasets/theatticusproject/cuad).
 
-## Real-World Motivation
-Reviewing highly dense legal text is tedious, error-prone, and incredibly expensive. The LegalContractAuditor simulates an actual human workflow (reading, spotting risks, drafting fixes) against real-world data derived from the standard CUAD (Contract Understanding Atticus Dataset). This ensures models are graded not on toy puzzles, but on genuine capability to perform commercially valuable paralegal auditing safely.
+## Why this exists
 
----
+Contract review is one of those jobs that's boring, expensive, and high-stakes all at the same time. Junior associates at law firms spend hundreds of hours reading through dense legal text looking for problems that could cost their clients millions. We wanted to build an environment that captures that workflow: read a contract, spot the issues, draft fixes, submit your findings.
 
-## Action Space
-The agent interacts with the environment using a typed JSON payload mapped to a Pydantic `Action` schema. 
-*   `read_contract`: Retrieves the full contract text.
-*   `identify_issue`: Logs a specific defect mapping to rigorous categories (`missing_clause`, `contradiction`, etc) and severities.
-*   `propose_fix` & `apply_fix`: Re-drafts the clause with updated, binding legal terminology.
-*   `request_clause`: Requests specific sections or external referencing.
-*   `submit_audit`: Submits a compiled history of changes and securely terminates the episode.
-*   `skip`: Null action.
+The contracts here aren't random — they're based on real commercial agreements (software licenses, MSAs, M&A NDAs) with deliberately injected bugs. The grader checks whether the agent found the right issues and whether the proposed fixes actually make legal sense.
 
-## Observation Space
-The Pydantic `Observation` schema provides rich, stateful context back to the agent:
-*   `contract_text`: The full legal copy (loaded via read command).
-*   `task_description` & `max_steps`: Meta objectives.
-*   `identified_issues`: Array tracking stateful bugs the agent has logged.
-*   `last_action_result`: Status of the last API call.
-*   `last_action_error`: Granular parser feedback if JSON schema fails.
-*   `progress_pct` & `hints`: Gamified workflow progression tracking.
+## Action space
 
----
+Actions are JSON objects with an `action_type` field. The full schema is in `models.py` (`Action` model).
+
+| Action | What it does |
+|--------|-------------|
+| `read_contract` | Loads the contract text into the observation |
+| `identify_issue` | Flags a specific problem (requires category, severity, description) |
+| `apply_fix` | Proposes replacement language for a flagged issue |
+| `submit_audit` | Wraps up the episode with a summary |
+| `skip` | Does nothing (burns a step) |
+
+Issue categories: `missing_clause`, `risky_language`, `contradiction`, `undefined_reference`, `ambiguous_term`, `compliance_risk`
+
+Severity levels: `critical`, `high`, `medium`, `low`
+
+## Observation space
+
+After each step the agent gets back an `Observation` (see `models.py`) containing:
+
+- `contract_text` — the full contract (populated after `read_contract`)
+- `identified_issues` — list of issues the agent has flagged so far
+- `progress_pct` — how far along the agent is (0.0–1.0)
+- `last_action_result` / `last_action_error` — feedback on what happened
+- `hints` — nudges if the agent is stuck
+- `current_step` / `max_steps` — step budget
 
 ## Tasks
-The environment currently ships with 3 incrementally difficult tasks:
 
-### 1. `task_easy` (Software License Audit)
-**Max Steps:** 20
-**Description:** Auditing a deliberately broken software license agreement. The agent must find standard missing confidentiality clauses, ambiguous payment terms, weak termination clauses, and overbroad liability exclusions.
+Three tasks, easy to hard. Each one uses a different contract type with different kinds of injected bugs.
 
-### 2. `task_medium` (MSA Contradiction Detection)
-**Max Steps:** 30
-**Description:** Audit a Master Services Agreement riddled with direct contradictions in payment terms, IP ownership, SLA guarantees, and governing law. Also masks a GDPR/CCPA compliance risk.
+**task_easy — Software License Audit** (20 steps)
+A broken software license. Missing confidentiality clause, vague payment terms ("reasonable time" instead of NET 30), weak termination language, blanket liability exclusion. Straightforward stuff.
 
-### 3. `task_hard` (M&A NDA Full Audit)
-**Max Steps:** 40
-**Description:** Extreme-scale audit of a complex Merger & Acquisition NDA. Requires cross-referencing undefined Effective Dates, conflicting confidentiality schedules, and structurally missing residuals clause analysis.
+**task_medium — MSA Contradiction Detection** (30 steps)
+A Master Services Agreement with contradictions planted across sections — conflicting payment terms, IP ownership clauses that disagree with each other, SLA guarantees that contradict the liability disclaimers. Also has a data privacy clause that violates GDPR/CCPA.
 
----
+**task_hard — M&A NDA Full Audit** (40 steps)
+A Merger & Acquisition NDA with subtle issues. Undefined Effective Date that breaks all time-bound obligations, conflicting confidentiality periods between the main agreement and an addendum, inadequate protection standards for financial projections, missing residuals analysis. This one is hard even for humans.
 
-## Setup Instructions
-1. Clone the repository and navigate to the directory:
-   ```bash
-   cd RL-Depoly
-   ```
-2. Set up a Python Virtual Environment:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Configure your `.env` variables or export them securely directly in terminal:
-   ```bash
-   export HF_TOKEN="your_valid_api_key_here"
-   export MODEL_NAME="gemini-2.0-flash" 
-   export BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai/"
-   export API_BASE_URL="https://huggingface.co/spaces/<username>/<repo name>/"
-   ```
+## Setup
 
-## Run Instructions
-Begin the evaluation inference script. The environment logic is embedded statically so there is no need to boot up a separate generic API server for testing evaluation:
+```bash
+git clone https://github.com/SRIHARI3452/legal-contract-auditor.git
+cd legal-contract-auditor
+
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On Linux/Mac:
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+Set these environment variables before running inference:
+
+```bash
+export API_BASE_URL="https://your-llm-endpoint.com/v1"
+export MODEL_NAME="your-model-name"
+export API_KEY="your-api-key"
+```
+
+## Running the inference script
+
 ```bash
 python inference.py
 ```
-> The script evaluates all tasks simultaneously and emits strict `[START]`, `[STEP]`, and `[END]` stdout arrays securely compatible with the standard Hackathon evaluators.
 
-## Docker Instructions
-You can containerize the server infrastructure seamlessly to expose the natively compliant REST endpoints (`POST /reset`, `POST /step`, `GET /state`) required by the Hugging Face Space deployments:
+This runs the agent against all three tasks sequentially and prints structured logs (`[START]`, `[STEP]`, `[END]`) to stdout.
+
+## Running the environment server (Docker)
+
+The environment exposes REST endpoints (`POST /reset`, `POST /step`, `GET /state`) via FastAPI.
 
 ```bash
 docker build -t legal-contract-auditor .
-
 docker run -p 7860:7860 legal-contract-auditor
 ```
 
----
+Then hit `http://localhost:7860/health` to check it's running.
 
-## Baseline Results
-The deterministic grading system caps scores dynamically between `0.0` and `1.0`. When tested natively using the default **gemini-2.0-flash** agent logic, the model systematically identifies the legal contradictions and securely applies valid fixes, resolving at a highly positive baseline score:
+## Endpoints
 
-*   **task_easy:** `0.7232` 
-*   **task_medium:** `0.6841` 
-*   **task_hard:** `0.6526` 
-*   **AVERAGE SCORE:** `0.6866`
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/reset` | Start a new episode. Body: `{"task_id": "task_easy"}` |
+| POST | `/step` | Take an action. Body: `{"action": {...}}` |
+| GET | `/state` | Get current environment state |
+| GET | `/tasks` | List available tasks |
+| GET | `/health` | Health check |
+
+## Baseline scores
+
+Tested with the default inference script. Scores are between 0.0 and 1.0.
+
+| Task | Score |
+|------|-------|
+| task_easy | 0.7232 |
+| task_medium | 0.6841 |
+| task_hard | 0.6526 |
+| **Average** | **0.6866** |
+
+## Project structure
+
+```
+├── inference.py       # baseline agent script (uses OpenAI client)
+├── environment.py     # core RL environment logic
+├── models.py          # Pydantic models (Action, Observation, Reward, etc.)
+├── contracts.py       # contract templates with injected bugs
+├── grader.py          # deterministic grading logic
+├── openenv.yaml       # OpenEnv metadata
+├── server/
+│   └── app.py         # FastAPI server wrapping the environment
+├── Dockerfile
+├── requirements.txt
+└── README.md
+```

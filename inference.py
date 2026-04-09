@@ -214,6 +214,7 @@ def format_action_str(action_dict: Dict[str, Any]) -> str:
         parts.append(f"sev={action_dict['issue_severity']}")
     return "|".join(parts)
 
+
 def build_step_context(step_num: int, obs_dict: Dict[str, Any]) -> str:
     max_steps = obs_dict["max_steps"]
     progress = obs_dict.get("progress_pct", 0) * 100
