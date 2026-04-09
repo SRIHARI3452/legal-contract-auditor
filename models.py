@@ -53,7 +53,7 @@ class Issue(BaseModel):
     fix_applied:       bool          = False
     fix_text:          Optional[str] = None
     fix_rationale:     Optional[str] = None
-    score_contribution: float        = 0.0
+    score_contribution: float        = 0.0001  
 
 
 class Observation(BaseModel):
@@ -63,13 +63,13 @@ class Observation(BaseModel):
     task_description:   str
     current_step:       int
     max_steps:          int
-    identified_issues:  List[Issue]       = []
-    applied_fixes:      List[str]         = []
-    available_actions:  List[ActionType]  = []
+    identified_issues:  List[Issue]       = Field(default_factory=list)
+    applied_fixes:      List[str]         = Field(default_factory=list)
+    available_actions:  List[ActionType]  = Field(default_factory=list)
     last_action_result: str               = ""
     last_action_error:  Optional[str]     = None
-    progress_pct:       float             = 0.0
-    hints:              List[str]         = []
+    progress_pct:       float             = 0.0001  
+    hints:              List[str]         = Field(default_factory=list)
 
 
 class Reward(BaseModel):
@@ -93,13 +93,13 @@ class EnvironmentState(BaseModel):
     contract_text:        str
     task_id:              str
     task_description:     str
-    ground_truth_issues:  List[Dict[str, Any]] = []
-    identified_issues:    List[Issue]           = []
-    applied_fixes:        List[str]             = []
+    ground_truth_issues:  List[Dict[str, Any]] = Field(default_factory=list)
+    identified_issues:    List[Issue]           = Field(default_factory=list)
+    applied_fixes:        List[str]             = Field(default_factory=list)
     current_step:         int                   = 0
     max_steps:            int                   = 30
     done:                 bool                  = False
     episode_id:           str = Field(default_factory=lambda: str(uuid.uuid4()))
-    cumulative_reward:    float                 = 0.0
+    cumulative_reward:    float                 = 0.0001  
     audit_submitted:      bool                  = False
     contract_read:        bool                  = False

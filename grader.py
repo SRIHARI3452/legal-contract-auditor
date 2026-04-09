@@ -116,7 +116,8 @@ def grade_episode(
 
     steps_used_ratio = current_step / max_steps if max_steps else 1.0
     step_efficiency = max(0.0001, 0.05 * (1.0 - steps_used_ratio)) * issue_detection
-    accuracy_penalty = min(0.30, false_positive_penalty)
+    accuracy_penalty = min(0.30, max(0.0001, false_positive_penalty))
+
 
     total = (
         issue_detection    * 0.45
